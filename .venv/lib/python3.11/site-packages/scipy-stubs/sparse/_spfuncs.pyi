@@ -1,0 +1,6 @@
+from scipy._typing import Untyped
+
+__all__ = ["count_blocks", "estimate_blocksize"]
+
+def estimate_blocksize(A: Untyped, efficiency: float = 0.7) -> Untyped: ...
+def count_blocks(A: Untyped, blocksize: tuple[int, int]) -> Untyped: ...

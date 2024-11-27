@@ -1,0 +1,13 @@
+from typing import Final
+
+import numpy as np
+import numpy.typing as npt
+from numpy._typing import _ArrayLikeInt
+
+class WilcoxonDistribution:
+    n: Final[npt.NDArray[np.int_]]
+
+    def __init__(self, /, n: _ArrayLikeInt) -> None: ...
+    def mean(self, /) -> npt.NDArray[np.float64]: ...
+    def cdf(self, /, k: _ArrayLikeInt) -> npt.NDArray[np.float64]: ...
+    def sf(self, /, k: _ArrayLikeInt) -> npt.NDArray[np.float64]: ...

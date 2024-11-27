@@ -1,0 +1,54 @@
+from typing import Any, Literal, overload
+from typing_extensions import TypeVar
+
+import numpy as np
+import numpy.typing as npt
+import optype.numpy as onp
+from scipy._typing import Seed
+
+__all__ = ["kmeans", "kmeans2", "vq", "whiten"]
+
+_SCT_fc = TypeVar("_SCT_fc", bound=np.inexact[Any])
+
+###
+
+class ClusterError(Exception): ...
+
+@overload
+def whiten(obs: npt.NDArray[_SCT_fc], check_finite: bool = True) -> onp.Array2D[_SCT_fc]: ...
+@overload
+def whiten(obs: onp.ToComplex2D, check_finite: bool = True) -> onp.Array2D[np.inexact[Any]]: ...
+
+#
+def vq(
+    obs: onp.ToComplex2D,
+    code_book: onp.ToComplex2D,
+    check_finite: bool = True,
+) -> tuple[onp.Array1D[np.int32 | np.intp], onp.Array1D[_SCT_fc]]: ...
+def py_vq(
+    obs: onp.ToComplex2D,
+    code_book: onp.ToComplex2D,
+    check_finite: bool = True,
+) -> tuple[onp.Array1D[np.intp], onp.Array1D[_SCT_fc]]: ...
+
+#
+def kmeans(
+    obs: onp.ToComplex2D,
+    k_or_guess: npt.ArrayLike,
+    iter: int = 20,
+    thresh: float = 1e-05,
+    check_finite: bool = True,
+    *,
+    seed: Seed | None = None,
+) -> tuple[onp.Array2D[np.inexact[Any]], float]: ...
+def kmeans2(
+    data: onp.ToComplex1D | onp.ToComplex2D,
+    k: npt.ArrayLike,
+    iter: int = 10,
+    thresh: float = 1e-05,
+    minit: Literal["random", "points", "++", "matrix"] = "random",
+    missing: Literal["warn", "raise"] = "warn",
+    check_finite: bool = True,
+    *,
+    seed: Seed | None = None,
+) -> tuple[onp.Array2D[np.inexact[Any]], onp.Array1D[np.int32]]: ...

@@ -1,0 +1,3 @@
+from scipy._typing import Untyped
+
+def linear_sum_assignment(*args: Untyped, **kwargs: Untyped) -> Untyped: ...
