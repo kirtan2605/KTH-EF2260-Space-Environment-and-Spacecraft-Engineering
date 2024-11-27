@@ -87,10 +87,27 @@ def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_m
 
     # THRESHOLDING
     # Set the threshold for SEU detection
-    threshold = 0.5
+    threshold = 0.95
 
     # Apply the threshold to create a binary matrix
     binary_images = (abs(scaled_noise) >= threshold).astype(np.int8)
+
+
+    # some images have more 1's than zeros.
+    # This will be the case when the SEUs cause a dip in intensity, rather than spike
+    # thus, we invert images with more 1's than zeros, to easily count the seu_sums
+    # the number of SEUs for all images then simply corresponds to the sum of elements of the images
+
+    # Iterate through each image and invert if 1s are the majority
+    for i in range(binary_images.shape[0]):
+        image = binary_images[i]  # Select the i-th image
+
+        # Count the number of 1s
+        num_ones = np.sum(image)
+
+        # If 1s are more than 0s, invert the image
+        if num_ones > (image.size / 2):
+            binary_images[i] = 1 - image  # Invert the image (1 -> 0, 0 -> 1)
 
     return binary_images
 
@@ -107,22 +124,22 @@ def save_binary_images_with_names(matrix, datetimes, output_dir, format="png"):
     """
     # Ensure the matrix is a NumPy array
     matrix = np.asarray(matrix)
-    
+
     # Check if the input is 3D
     if matrix.ndim != 3:
         raise ValueError("Input matrix must be a 3D array of shape (n, a, b).")
-    
+
     # Check if the matrix is binary
     if not np.all((matrix == 0) | (matrix == 1)):
         raise ValueError("Input matrix must only contain binary values (0 and 1).")
-    
+
     # Check if filenames match the number of slices
     if len(datetimes) != matrix.shape[0]:
         raise ValueError("Length of filenames array must match the number of slices in the matrix.")
-    
+
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Iterate over each (a, b) slice in the matrix and corresponding filename
     for i in range(matrix.shape[0]):
         # Convert the binary slice to a Pillow image in mode '1' (1-bit pixels)
@@ -131,10 +148,10 @@ def save_binary_images_with_names(matrix, datetimes, output_dir, format="png"):
 
         # Convert datetime to YYYYMMDDHHMMSS format
         filename = datetimes[i].strftime("%Y%m%d%H%M%S") + f".{format}"
-        
+
         # Save the image with the corresponding filename
         image.save(os.path.join(output_dir, filename))
-    
+
     print(f"Saved {matrix.shape[0]} binary images to {output_dir}")
 
 def calculate_sums(matrix):
@@ -149,24 +166,24 @@ def calculate_sums(matrix):
     """
     # Ensure the matrix is a NumPy array
     matrix = np.asarray(matrix)
-    
+
     # Check if the input is 3D
     if matrix.ndim != 3:
         raise ValueError("Input matrix must be a 3D array of shape (n, a, b).")
-    
+
     # Check if the matrix is binary
     if not np.all((matrix == 0) | (matrix == 1)):
         raise ValueError("Input matrix must only contain binary values (0 and 1).")
-    
+
     # Calculate the sum of each (a, b) slice
     slice_sums = np.sum(matrix, axis=(1, 2), keepdims=True)
-    
+
     return slice_sums
 
 # Define the folder path containing the .bin files
-folder_path = '/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image_data/python_parsed_data_files/'  # Replace with the correct path
-datetime_array_filepath = folder_path+'date_time.npy'
-image_data_filepath = folder_path+'image_data.npy'
+folder_path = '/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image-data/python-parsed-data-files/'  # Replace with the correct path
+datetime_array_filepath = folder_path+'date-time.npy'
+image_data_filepath = folder_path+'image-data.npy'
 
 dates_array = np.load(datetime_array_filepath, allow_pickle=True)
 images_array = np.load(image_data_filepath, allow_pickle=True)
@@ -199,6 +216,32 @@ seu_sums = calculate_sums(seu_identifiable_images)
 # Flatten sums to match x_values
 seu_sums = seu_sums.flatten()
 
+'''
+# Plot
+plt.figure(figsize=(8, 6))
+plt.plot(seu_identifiable_dates, seu_sums, linestyle='-', color='b', label="Sum of SEUs")
+plt.xlabel("DateTime")
+plt.ylabel("Number of SEUs")
+plt.title("SEU variation over time")
+plt.grid(True)
+plt.legend()
+plt.show()
+'''
+
+# Combine dates and sums, then sort by SEU sums
+sorted_data = sorted(zip(seu_sums, seu_identifiable_dates), key=lambda x: x[0])
+sorted_sums, sorted_dates = zip(*sorted_data)
+
+# Plot the sorted data
+plt.figure(figsize=(8, 6))
+plt.plot(sorted_dates, sorted_sums, linestyle='-', color='b', label="Sorted Sum of SEUs")
+plt.xlabel("DateTime")
+plt.ylabel("Number of SEUs")
+plt.title("SEU variation (sorted by number of SEUs)")
+plt.grid(True)
+plt.legend()
+plt.show()
+
 
 
 # BINNING THE DATA OVER TIME
@@ -215,28 +258,17 @@ binned_sums = []
 while current_bin_start <= end_time:
     # Determine the end of the current bin
     current_bin_end = current_bin_start + bin_size
-    
+
     # Find indices of sums within the current bin
     in_bin = (seu_identifiable_dates >= current_bin_start) & (seu_identifiable_dates < current_bin_end)
-        
+
     # Sum SEUs in the current bin
     bin_sum = np.sum(seu_sums[in_bin])
     binned_dates.append(current_bin_start)
     binned_sums.append(bin_sum)
-        
+
     # Move to the next bin
     current_bin_start = current_bin_end
-
-    
-# Plot
-plt.figure(figsize=(8, 6))
-plt.plot(seu_identifiable_dates, seu_sums, linestyle='-', color='b', label="Sum of SEUs")
-plt.xlabel("DateTime")
-plt.ylabel("Number of SEUs")
-plt.title("SEU variation over time")
-plt.grid(True)
-plt.legend()
-plt.show()
 
 
 # Plot the binned data as a bar chart
