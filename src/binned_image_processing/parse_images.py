@@ -49,7 +49,7 @@ def load_images_and_dates(sorted_bin_files):
 
 
 # Define the folder path containing the .bin files
-folder_path = '/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image_data/20230315_binned_images/'  # Replace with the correct path
+folder_path = '/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image-data/20230315-binned-images/'  # Replace with the correct path
 
 # List all .bin files in the folder
 bin_files = glob.glob(os.path.join(folder_path, '*.bin'))

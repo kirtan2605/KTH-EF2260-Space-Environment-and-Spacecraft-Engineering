@@ -8,7 +8,7 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV "/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
+setenv VIRTUAL_ENV "/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/bin:$PATH"

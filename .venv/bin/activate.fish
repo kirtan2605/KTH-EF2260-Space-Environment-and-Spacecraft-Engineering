@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
+set -gx VIRTUAL_ENV "/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

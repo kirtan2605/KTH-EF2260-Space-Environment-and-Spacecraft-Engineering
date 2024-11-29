@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
+VIRTUAL_ENV="/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

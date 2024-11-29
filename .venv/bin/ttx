@@ -1,4 +1,4 @@
-#!/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv/bin/python3
+#!/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

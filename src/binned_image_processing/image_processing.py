@@ -3,11 +3,11 @@ from PIL import Image
 from datetime import datetime, timedelta
 import os
 import matplotlib.pyplot as plt
-from scipy.ndimage import median_filter
+from scipy.ndimage import median_filter, uniform_filter
 import matplotlib.colors as colors
 import gc
 
-def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_max=1):
+def seu_image_processing(images, image_index, window_size=3, filter_size=3, new_min=-1, new_max=1):
     """
     Comprehensive image processing function with multiple operations.
     Args:
@@ -33,11 +33,27 @@ def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_m
 
     print("window average computed")
 
+    '''
+    plt.figure(figsize=(10, 6))
+    plt.imshow(windowed_avg[image_index], cmap='viridis', aspect='auto')
+    plt.colorbar()
+    plt.title(f"Windowed Average Image: {image_index}")
+    plt.show()
+    '''
+
     # Slice original images
     images = images[1:-1]
 
     # Compute element-wise difference
     images = images - windowed_avg
+
+    '''
+    plt.figure(figsize=(10, 6))
+    plt.imshow(images[image_index], cmap='viridis', aspect='auto')
+    plt.colorbar()
+    plt.title(f"Image without Windowed Average Image: {image_index}")
+    plt.show()
+    '''
 
     print("image difference calculated")
 
@@ -52,7 +68,23 @@ def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_m
         for img in images
     ])
 
+    '''
+    # Apply mean filtering
+    median_filtered = np.array([
+        uniform_filter(img, size=filter_size)
+        for img in images
+    ])
+    '''
+
     print("difference median filtered")
+
+    '''
+    plt.figure(figsize=(10, 6))
+    plt.imshow(median_filtered[image_index], cmap='viridis', aspect='auto')
+    plt.colorbar()
+    plt.title(f"Mean Filetered Image: {image_index}")
+    plt.show()
+    '''
 
     # Extract noise by taking difference between original and filtered
     images = images - median_filtered
@@ -63,6 +95,8 @@ def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_m
     gc.collect()
 
     print("noise extracted")
+
+    '''
 
     # ONLY SCALING
     # Scale each image independently
@@ -84,13 +118,14 @@ def seu_image_processing(images, window_size=3, filter_size=3, new_min=-1, new_m
     gc.collect()
 
     print("scaled noise calculated")
+    '''
 
     # THRESHOLDING
     # Set the threshold for SEU detection
-    threshold = 0.95
+    threshold = 250
 
     # Apply the threshold to create a binary matrix
-    binary_images = (abs(scaled_noise) >= threshold).astype(np.int8)
+    binary_images = (abs(images) >= threshold).astype(np.int8)
 
 
     # some images have more 1's than zeros.
@@ -180,8 +215,13 @@ def calculate_sums(matrix):
 
     return slice_sums
 
+
+# index of image whose progression will be plot throughout
+image_progess_index = 22
+
+
 # Define the folder path containing the .bin files
-folder_path = '/home/kirtan/github/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image-data/python-parsed-data-files/'  # Replace with the correct path
+folder_path = '/home/kirtan/local-repository/KTH-EF2260-Space-Environment-and-Spacecraft-Engineering/image-data/python-parsed-data-files/'  # Replace with the correct path
 datetime_array_filepath = folder_path+'date-time.npy'
 image_data_filepath = folder_path+'image-data.npy'
 
@@ -193,7 +233,15 @@ images_array = images_array.astype(np.int16)
 
 print("image array imported")
 
-seu_identifiable_images = (seu_image_processing(images_array)).astype(np.int8)
+'''
+plt.figure(figsize=(10, 6))
+plt.imshow(images_array[image_progess_index+1], cmap='viridis', aspect='auto')
+plt.colorbar()
+plt.title(f"Original Image : {image_progess_index}")
+plt.show()
+'''
+
+seu_identifiable_images = (seu_image_processing(images_array, image_progess_index)).astype(np.int8)
 seu_identifiable_dates = dates_array[1:-1]
 
 # freeing space to avoid the process from getting killed
@@ -216,32 +264,17 @@ seu_sums = calculate_sums(seu_identifiable_images)
 # Flatten sums to match x_values
 seu_sums = seu_sums.flatten()
 
-'''
+
 # Plot
 plt.figure(figsize=(8, 6))
 plt.plot(seu_identifiable_dates, seu_sums, linestyle='-', color='b', label="Sum of SEUs")
+plt.yscale('log')
 plt.xlabel("DateTime")
 plt.ylabel("Number of SEUs")
 plt.title("SEU variation over time")
 plt.grid(True)
 plt.legend()
 plt.show()
-'''
-
-# Combine dates and sums, then sort by SEU sums
-sorted_data = sorted(zip(seu_sums, seu_identifiable_dates), key=lambda x: x[0])
-sorted_sums, sorted_dates = zip(*sorted_data)
-
-# Plot the sorted data
-plt.figure(figsize=(8, 6))
-plt.plot(sorted_dates, sorted_sums, linestyle='-', color='b', label="Sorted Sum of SEUs")
-plt.xlabel("DateTime")
-plt.ylabel("Number of SEUs")
-plt.title("SEU variation (sorted by number of SEUs)")
-plt.grid(True)
-plt.legend()
-plt.show()
-
 
 
 # BINNING THE DATA OVER TIME
@@ -274,6 +307,7 @@ while current_bin_start <= end_time:
 # Plot the binned data as a bar chart
 plt.figure(figsize=(10, 6))
 plt.bar(binned_dates, binned_sums, width=0.01, color='b', label="Binned SEUs")  # Bar chart with width adjusted for readability
+plt.yscale('log')
 plt.xlabel("DateTime")
 plt.ylabel("Number of SEUs")
 plt.title("SEU Variation (Binned Every 15 Minutes)")
@@ -285,109 +319,47 @@ plt.show()
 
 
 '''
-# Plot
-plt.figure(figsize=(8, 6))
-plt.plot(binned_dates, binned_sums, linestyle='-', color='b', label="Binned Sum of SEUs")
-plt.xlabel("DateTime")
-plt.ylabel("Number of SEUs")
-plt.title("SEU variation over time")
-plt.grid(True)
-plt.legend()
-plt.show()
-'''
-
-
-'''
 using averaging over 3 images, we can not use the first and the second image.
 Thus, for initial number of images = N, the SEU identifiable images are N-2
 thus, the date-time information can be matched with the SEU identifiable images
 by removing the first and last elements
 '''
 
+'''
 
+plt.figure(figsize=(10, 6))
+plt.imshow(seu_identifiable_images[10], cmap='viridis', aspect='auto')
+plt.colorbar()
+plt.title(f"SEU Processed Image: {image_progess_index}")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+plt.imshow(np.log(abs(seu_identifiable_images[100])), cmap='viridis', aspect='auto')
+plt.colorbar()
+plt.title(f"SEU Processed Image: {100}")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+plt.imshow(np.log(abs(seu_identifiable_images[1000])), cmap='viridis', aspect='auto')
+plt.colorbar()
+plt.title(f"SEU Processed Image: {1000}")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+plt.imshow(np.log(abs(seu_identifiable_images[10000])), cmap='viridis', aspect='auto')
+plt.colorbar()
+plt.title(f"SEU Processed Image: {10000}")
+plt.show()
+'''
 
 '''
 # FOR ONLY SCALED IMAGES
 
 plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[10], cmap='viridis', aspect='auto', norm=colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1))
+im = plt.imshow(seu_identifiable_images[10], cmap='viridis', aspect='auto', norm=colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1))
 cbar = plt.colorbar(im)
 cbar.set_ticks([-1, 0, 1])
 cbar.set_ticklabels(['-1', '0', '1'])
 plt.title(f"SEU Processed Image: {10}")
-plt.show()
-'''
-
-'''
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[0], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {0}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[1], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {1}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[2], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {2}")
-plt.show()
-
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[10], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {10}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[100], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {100}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[500], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {500}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[1000], cmap='viridis', aspect='auto')
-plt.title(f"SEU Processed Image: {1000}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[2500], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {2500}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[5000], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {5000}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[7500], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {7500}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[10000], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {10000}")
-plt.show()
-
-plt.figure(figsize=(10, 6))
-im = plt.imshow(seu_identifiable[12500], cmap='viridis', aspect='auto')
-plt.colorbar(im)
-plt.title(f"SEU Processed Image: {12500}")
 plt.show()
 '''
