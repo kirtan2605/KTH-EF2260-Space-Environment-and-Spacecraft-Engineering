@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter, uniform_filter
 import matplotlib.colors as colors
 import gc
+import csv
 
 def seu_image_processing(images, image_index, window_size=3, filter_size=3, new_min=-1, new_max=1):
     """
@@ -122,7 +123,7 @@ def seu_image_processing(images, image_index, window_size=3, filter_size=3, new_
 
     # THRESHOLDING
     # Set the threshold for SEU detection
-    threshold = 250
+    threshold = 600
 
     # Apply the threshold to create a binary matrix
     binary_images = (abs(images) >= threshold).astype(np.int8)
@@ -263,6 +264,28 @@ seu_sums = calculate_sums(seu_identifiable_images)
 
 # Flatten sums to match x_values
 seu_sums = seu_sums.flatten()
+
+
+# Save dates to CSV
+dates_file_path = os.path.join(folder_path, 'seu_identifiable_dates.csv')
+with open(dates_file_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["Date-Time"])  # Writing header
+    for dt in seu_identifiable_dates:
+        writer.writerow([dt])
+
+print(f"Dates saved successfully to {dates_file_path}")
+
+# Save sums to CSV
+sums_file_path = os.path.join(folder_path, 'seu_sums.csv')
+with open(sums_file_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["SEU Sum"])  # Writing header
+    for seu_sum in seu_sums:
+        writer.writerow([seu_sum])
+
+print(f"Sums saved successfully to {sums_file_path}")
+
 
 
 # Plot
